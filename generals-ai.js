@@ -19,7 +19,7 @@
 // ----------------                  --------------------------
 
 var logger = {};
-var DEBUG_LEVEL = 6;
+var DEBUG_LEVEL = 5;
 logger.trace = function(str) {
   if (DEBUG_LEVEL >= 6) {
     console.log(str);
@@ -40,6 +40,7 @@ logger.info = function(str) {
 
 // == Core game AI ==
 var globalTurnCounter = 0; // we only process once per tick
+
 function processGameState(gameState) {
   // do nothing
   if (gameState.turnCounter <= globalTurnCounter) {
