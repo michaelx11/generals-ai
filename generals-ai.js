@@ -1,6 +1,3 @@
-// Game state object is used by the AI engine
-var gameState = {}
-
 //                   Overall System Design
 //
 // --------------                           ------------------
@@ -41,20 +38,67 @@ logger.info = function(str) {
   }
 }
 
+// == Core game AI ==
+var globalTurnCounter = 0; // we only process once per tick
+function processGameState(gameState) {
+  // do nothing
+  if (gameState.turnCounter <= globalTurnCounter) {
+    return;
+  }
+
+  logger.trace(gameState);
+
+  globalTurnCounter = gameState.turnCounter;
+  makeMoveFromCapitalToLeft(gameState);
+}
+
+
+function makeMoveFromCapitalToLeft(gameState) {
+  var generalTile = getOurGeneralTile(gameState);
+  if (!generalTile) {
+    return;
+  }
+  logger.trace(generalTile);
+  // Make a move left
+  performMove(generalTile.row, generalTile.col, 0, true);
+}
+
+
+function retrieveRandomTile() {
+
+}
+
+function makeRandomMove() {
+}
+
 // == Game State Methods ==
-function getOurGeneralTile() {
+
+function filterTilesForDesc(gameState, regex) {
   var tileList = gameState.tileList;
   if (!tileList) {
     return null;
   }
 
+  var filtered = [];
   for (var i = 0; i < tileList.length; i++) {
     var tileObj = tileList[i];
-    if (tileObj.desc.search(/selectable.*general/gi) >= 0) {
-      return tileObj;
+    if (tileObj.desc.search(regex) >= 0) {
+      filtered.push(tileObj);
     }
   }
-  return null;
+
+  return filtered;
+}
+
+function getOurTiles(gameState) {
+}
+
+function getOurGeneralTile(gameState) {
+  var generalTiles = filterTilesForDesc(gameState, /selectable.*general/gi);
+  if (generalTiles.length != 1) {
+    return null;
+  }
+  return generalTiles[0];
 }
 
 // == AI Engine Methods ==
@@ -90,8 +134,39 @@ function checkGlobalSymbols() {
   return (typeof GLOBAL_GAME_MAP !== 'undefined' && GLOBAL_GAME_MAP != null);
 }
 
+// NOTE: username currently hardcoded ...
+function parseGameLeaderboard(gameState, ourUsername) {
+  var leaderboardElement = document.getElementById("game-leaderboard").children[0];
+  var leaderboard = [];
+  for (var i = 1; i < leaderboardElement.childElementCount; i++) {
+    var leaderboardRow = leaderboardElement.children[i];
+    var nameElement = leaderboardRow.children[1];
+    var armyElement = leaderboardRow.children[2];
+    var landElement = leaderboardRow.children[3];
+
+    var color = nameElement.className.split(" ").pop();
+    var username = nameElement.innerText;
+    var armyCount = parseInt(armyElement.innerText);
+    var landCount = parseInt(armyElement.innerText);
+    // Check for our color
+    if (username === ourUsername) {
+      gameState.ourColor = color;
+    }
+
+    leaderboard.push({
+      color: color,
+      username: username,
+      army: armyCount,
+      land: landCount
+    });
+  }
+  logger.trace(leaderboard);
+  gameState.leaderboard = leaderboard;
+}
+
 function populateGameState() {
-  gameMap = document.getElementById("map").children[0];
+  var gameMap = document.getElementById("map").children[0];
+
   gameState = {}
   gameState.numRows = gameMap.childElementCount;
   gameState.numCols = gameMap.children[0].childElementCount;
@@ -118,26 +193,20 @@ function populateGameState() {
   var turnCounterElement = document.getElementById("turn-counter");
   gameState.turnCounter = parseInt(turnCounterElement.textContent.match(/\d+/gi));
 
+  parseGameLeaderboard(gameState, 'boisterous');
+
+  logger.trace("our color: " + gameState.ourColor);
   logger.trace("r: " + gameState.numRows + " c: " + gameState.numCols);
   logger.trace(gameState.turnCounter);
-}
-
-function makeMoveFromCapitalToLeft() {
-  var generalTile = getOurGeneralTile();
-  if (!generalTile) {
-    return;
-  }
-  logger.trace(generalTile);
-  // Make a move left
-  performMove(generalTile.row, generalTile.col, 0, true);
+  return gameState;
 }
 
 function tick() {
   logger.trace("Tick!");
   // populate game state
-  populateGameState();
+  var gameState = populateGameState();
   // feed game state into AI engine
-  makeMoveFromCapitalToLeft();
+  processGameState(gameState);
 }
 
 // Main
