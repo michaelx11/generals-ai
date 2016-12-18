@@ -77,6 +77,7 @@ var DIRECTIONS = [
   [1, 0]
 ];
 
+// Return {dirs: [...], tiles: [...]}
 function getValidMoveDirections(gameState, tileObj) {
   let row = tileObj.row;
   let col = tileObj.col;
@@ -84,6 +85,8 @@ function getValidMoveDirections(gameState, tileObj) {
   logger.trace("checking orig row: " + row + " col: " + col);
 
   let validMoves = [];
+  let validTiles = [];
+  let weights = [];
   // Iterate through directions
   for (let i = 0; i < DIRECTIONS.length; i++) {
     let newR = row + DIRECTIONS[i][0];
@@ -108,9 +111,27 @@ function getValidMoveDirections(gameState, tileObj) {
       }
     }
 
+    validTiles.push(newTile);
     validMoves.push(i);
   }
-  return validMoves;
+  return {moves: validMoves, tiles: validTiles};
+}
+
+// Exploratory weight function!
+function explorerWeightFunction(newTile) {
+  // baseline
+  let weight = 1.0;
+  // new tile bonus
+  if (newTile.desc.search(/selectable/gi) < 0) {
+    weight += 5.0;
+  }
+  // city bonus
+  if (newTile.desc.search(/city/gi) >= 0) {
+    weight += 20.0;
+  }
+  // unitCount bonus
+  weight += newTile.unitCount / 100.0;
+  return weight;
 }
 
 function makeRandomMove(gameState) {
@@ -126,14 +147,30 @@ function makeRandomMove(gameState) {
     if (bigTiles[i].unitCount <= 1) {
       continue;
     }
-    let validMoves = getValidMoveDirections(gameState, bigTiles[i]);
-    logger.trace('valid moves: ' + validMoves);
-    if (validMoves.length > 0) {
-      let randMove = validMoves[Math.floor(Math.random() * validMoves.length)];
-      logger.trace('random move: ' + randMove);
-      performMove(bigTiles[i].row, bigTiles[i].col, randMove);
-      return;
+    let validMoveResult = getValidMoveDirections(gameState, bigTiles[i], explorerWeightFunction);
+    let validMoves = validMoveResult.moves;
+    let validTiles = validMoveResult.tiles;
+
+    let totalWeight = 0.0;
+    let weights = [];
+    for (let u = 0; u < validTiles.length; u++) {
+      let tempW = explorerWeightFunction(validTiles[u]);
+      totalWeight += tempW;
+      weights.push(tempW);
     }
+
+    let accum = 0.0;
+    let rand = Math.random();
+    for (let u = 0; u < validMoves.length - 1; u++) {
+      accum += weights[u];
+      if (rand <= accum / totalWeight) {
+        performMove(bigTiles[i].row, bigTiles[i].col, validMoves[u]);
+        return;
+      }
+    }
+    // last move
+    performMove(bigTiles[i].row, bigTiles[i].col, validMoves.pop());
+    return;
   }
 }
 
