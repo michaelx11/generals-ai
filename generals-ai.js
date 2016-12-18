@@ -277,5 +277,5 @@ function tick() {
 }
 
 // Main
-// Tick every 500 milliseconds
-window.setInterval(tick, 500);
+// Tick every 250 milliseconds
+window.setInterval(tick, 250);
