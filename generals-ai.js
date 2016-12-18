@@ -72,9 +72,9 @@ function shuffle(a) {
 
 var DIRECTIONS = [
   [0, -1],
-  [1, 0],
+  [-1, 0],
   [0, 1],
-  [-1, 0]
+  [1, 0]
 ];
 
 function getValidMoveDirections(gameState, tileObj) {
@@ -108,15 +108,23 @@ function getValidMoveDirections(gameState, tileObj) {
 
 function makeRandomMove(gameState) {
   let ourTiles = getOurTiles(gameState);
-  shuffle(ourTiles);
-  for (let i = 0; i < ourTiles.length; i++) {
-    if (ourTiles[i].unitCount <= 1) {
+  ourTiles.sort(function(a, b) {
+    // Sort descending in terms of unitcount
+    return b.unitCount - a.unitCount;
+  });
+  // Only take the largest 5 clumps
+  let bigTiles = ourTiles.slice(0, 5);
+  shuffle(bigTiles);
+  for (let i = 0; i < bigTiles.length; i++) {
+    if (bigTiles[i].unitCount <= 1) {
       continue;
     }
-    let validMoves = getValidMoveDirections(gameState, ourTiles[i]);
+    let validMoves = getValidMoveDirections(gameState, bigTiles[i]);
+    logger.trace('valid moves: ' + validMoves);
     if (validMoves.length > 0) {
       let randMove = validMoves[Math.floor(Math.random() * validMoves.length)];
-      performMove(ourTiles[i].row, ourTiles[i].col, randMove);
+      logger.trace('random move: ' + randMove);
+      performMove(bigTiles[i].row, bigTiles[i].col, randMove);
       return;
     }
   }
