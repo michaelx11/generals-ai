@@ -49,7 +49,7 @@ function processGameState(gameState) {
   logger.trace(gameState);
 
   globalTurnCounter = gameState.turnCounter;
-  makeMoveFromCapitalToLeft(gameState);
+  makeRandomMove(gameState);
 }
 
 
@@ -63,12 +63,55 @@ function makeMoveFromCapitalToLeft(gameState) {
   performMove(generalTile.row, generalTile.col, 0, true);
 }
 
-
-function retrieveRandomTile() {
-
+function shuffle(a) {
+  for (let i = a.length; i; i--) {
+    let j = Math.floor(Math.random() * i);
+    [a[i - 1], a[j]] = [a[j], a[i - 1]];
+  }
 }
 
-function makeRandomMove() {
+var DIRECTIONS = [
+  [0, -1],
+  [1, 0],
+  [0, 1],
+  [-1, 0]
+];
+
+function getValidMoveDirections(gameState, tileObj) {
+  let row = tileObj.row;
+  let col = tileObj.col;
+
+  let validMoves = [];
+  // Iterate through directions
+  for (let i = 0; i < DIRECTIONS.length; i++) {
+    let newR = row + DIRECTIONS[i][0];
+    let newC = col + DIRECTIONS[i][1];
+
+    if (newR < 0 || newR >= gameState.numRows || newC < 0 || newC > gameState.numRows) {
+      continue;
+    }
+
+    let newTile = gameState.tileGrid[newR][newC];
+    if (newTile.desc.search(/mountain/gi) >= 0) {
+      continue;
+    }
+
+    validMoves.push(i);
+  }
+  return validMoves;
+}
+
+function makeRandomMove(gameState) {
+  let ourTiles = getOurTiles(gameState);
+  shuffle(ourTiles);
+  for (let i = 0; i < ourTiles.length; i++) {
+    let validMoves = getValidMoveDirections(gameState, ourTiles[i]);
+    if (validMoves.length > 0) {
+      let randMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+      performMove(ourTiles[i].row, ourTiles[i].col, randMove);
+      return;
+    }
+  }
 }
 
 // == Game State Methods ==
@@ -91,6 +134,7 @@ function filterTilesForDesc(gameState, regex) {
 }
 
 function getOurTiles(gameState) {
+  return filterTilesForDesc(gameState, /selectable/gi);
 }
 
 function getOurGeneralTile(gameState) {
@@ -170,7 +214,7 @@ function populateGameState() {
   gameState = {}
   gameState.numRows = gameMap.childElementCount;
   gameState.numCols = gameMap.children[0].childElementCount;
-  gameState.rows = [];
+  gameState.tileGrid = [];
   gameState.tileList = [];
   for (var i = 0; i < gameState.numRows; i++) {
     var row = [];
@@ -179,7 +223,7 @@ function populateGameState() {
       var currentTile = currentTR.children[u];
       var tileObj = {};
       tileObj.desc = currentTile.className;
-      tileObj.text = currentTile.innerText;
+      tileObj.count = currentTile.innerText ? parseInt(currentTile.innerText) : 0;
       tileObj.row = i;
       tileObj.col = u;
       // keep in formation
@@ -187,7 +231,7 @@ function populateGameState() {
       // keep general list for quick search
       gameState.tileList.push(tileObj);
     }
-    gameState.rows.push(row);
+    gameState.tileGrid.push(row);
   }
 
   var turnCounterElement = document.getElementById("turn-counter");
