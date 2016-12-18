@@ -21,5 +21,9 @@
     "activeTab",
     "storage"
   ],
-  "web_accessible_resources": ["generals-ai.js", "generals-interface.js"]
+  "web_accessible_resources": [
+    "utils.js",
+    "generals-ai.js",
+    "generals-interface.js"
+  ]
 }
