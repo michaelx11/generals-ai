@@ -21,23 +21,39 @@ var gameState = {}
 // |   makeMove   |<-----------------|Game Engine Movement API|
 // ----------------                  --------------------------
 
+var logger = {};
+var DEBUG_LEVEL = 6;
+logger.trace = function(str) {
+  if (DEBUG_LEVEL >= 6) {
+    console.log(str);
+  }
+}
+
+logger.debug = function(str) {
+  if (DEBUG_LEVEL >= 5) {
+    console.log(str);
+  }
+}
+
+logger.info = function(str) {
+  if (DEBUG_LEVEL >= 4) {
+    console.log(str);
+  }
+}
+
 // == Game State Methods ==
 function getOurGeneralTile() {
-  console.log("getting general tile!");
   var tileList = gameState.tileList;
   if (!tileList) {
-    console.log("tile list undefined");
     return null;
   }
 
   for (var i = 0; i < tileList.length; i++) {
     var tileObj = tileList[i];
-    console.log(tileObj);
     if (tileObj.desc.search(/selectable.*general/gi) >= 0) {
       return tileObj;
     }
   }
-  console.log("didn't find a tile!");
   return null;
 }
 
@@ -46,7 +62,6 @@ function getOurGeneralTile() {
 var ARROW_KEY_CODES = [37, 38, 39, 40];
 // == Public Action Helpers for AI Engine ==
 function performMove(startRow, startCol, direction, shouldSplit) {
-  console.log("performing move!");
   // Set mouseup coords
   GLOBAL_COORDS = { row: startRow, col: startCol };
   // mouseup in origin square
@@ -100,7 +115,11 @@ function populateGameState() {
     gameState.rows.push(row);
   }
 
-  console.log("r: " + gameState.numRows + " c: " + gameState.numCols);
+  var turnCounterElement = document.getElementById("turn-counter");
+  gameState.turnCounter = parseInt(turnCounterElement.textContent.match(/\d+/gi));
+
+  logger.trace("r: " + gameState.numRows + " c: " + gameState.numCols);
+  logger.trace(gameState.turnCounter);
 }
 
 function makeMoveFromCapitalToLeft() {
@@ -108,13 +127,19 @@ function makeMoveFromCapitalToLeft() {
   if (!generalTile) {
     return;
   }
-  console.log(generalTile);
+  logger.trace(generalTile);
   // Make a move left
-  performMove(generalTile.row, generalTile.col, 0);
+  performMove(generalTile.row, generalTile.col, 0, true);
+}
+
+function tick() {
+  logger.trace("Tick!");
+  // populate game state
+  populateGameState();
+  // feed game state into AI engine
+  makeMoveFromCapitalToLeft();
 }
 
 // Main
-
-console.log("LOADED!");
-populateGameState();
-makeMoveFromCapitalToLeft();
+// Tick every 500 milliseconds
+window.setInterval(tick, 500);
