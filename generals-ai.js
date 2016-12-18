@@ -124,10 +124,10 @@ function explorerWeightFunction(newTile) {
   // new tile bonus
   if (newTile.desc.search(/selectable/gi) < 0) {
     weight += 5.0;
-  }
-  // city bonus
-  if (newTile.desc.search(/city/gi) >= 0) {
-    weight += 20.0;
+    // city bonus if not captured
+    if (newTile.desc.search(/city/gi) >= 0) {
+      weight += 20.0;
+    }
   }
   // unitCount bonus
   weight += newTile.unitCount / 100.0;
