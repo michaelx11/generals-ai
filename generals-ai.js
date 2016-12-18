@@ -17,27 +17,6 @@
 // ----------------                  --------------------------
 // |   makeMove   |<-----------------|Game Engine Movement API|
 // ----------------                  --------------------------
-
-var logger = {};
-var DEBUG_LEVEL = 5;
-logger.trace = function(str) {
-  if (DEBUG_LEVEL >= 6) {
-    console.log(str);
-  }
-}
-
-logger.debug = function(str) {
-  if (DEBUG_LEVEL >= 5) {
-    console.log(str);
-  }
-}
-
-logger.info = function(str) {
-  if (DEBUG_LEVEL >= 4) {
-    console.log(str);
-  }
-}
-
 // == Core game AI ==
 var globalTurnCounter = 0; // we only process once per tick
 
