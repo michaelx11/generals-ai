@@ -101,6 +101,13 @@ function getValidMoveDirections(gameState, tileObj) {
       continue;
     }
 
+    // Don't attempt to eat a city unless you're big enough!
+    if (newTile.desc.search(/city/gi) >= 0) {
+      if (tileObj.unitCount <= newTile.unitCount) {
+        continue;
+      }
+    }
+
     validMoves.push(i);
   }
   return validMoves;
