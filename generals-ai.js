@@ -19,6 +19,11 @@
 // ----------------                  --------------------------
 // == Core game AI ==
 var globalTurnCounter = 0; // we only process once per tick
+var RECENTLY_VISITED_TILES_MAX_LENGTH = 30;
+// don't consider the most recent moves (too easy to box in)
+var RECENTLY_VISITED_TILES_CUSHION_LENGTH = 10;
+var RECENTLY_VISITED_TILES_FUDGE_PROB = .25;
+var recentlyVisitedTiles = []; // Keep recently visited tiles
 
 function processGameState(gameState) {
   // do nothing
@@ -114,6 +119,23 @@ function explorerWeightFunction(newTile) {
   return weight;
 }
 
+function checkAgainstRecentTiles(newTile) {
+  for (let i = RECENTLY_VISITED_TILES_CUSHION_LENGTH; i < recentlyVisitedTiles.length; i++) {
+    if (newTile.row == recentlyVisitedTiles[i].row &&
+        newTile.col == recentlyVisitedTiles[i].col) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function appendToRecentlyVisitedTiles(newTile) {
+  recentlyVisitedTiles.push(newTile);
+  if (recentlyVisitedTiles.length > RECENTLY_VISITED_TILES_MAX_LENGTH) {
+    recentlyVisitedTiles.shift();
+  }
+}
+
 function makeRandomMove(gameState) {
   let ourTiles = getOurTiles(gameState);
   ourTiles.sort(function(a, b) {
@@ -141,16 +163,23 @@ function makeRandomMove(gameState) {
 
     let accum = 0.0;
     let rand = Math.random();
-    for (let u = 0; u < validMoves.length - 1; u++) {
+    let u = 0;
+    for (; u < validMoves.length - 1; u++) {
       accum += weights[u];
       if (rand <= accum / totalWeight) {
-        performMove(bigTiles[i].row, bigTiles[i].col, validMoves[u]);
-        return;
+        if (checkAgainstRecentTiles(validTiles[u]) || Math.random() > RECENTLY_VISITED_TILES_FUDGE_PROB) {
+          performMove(bigTiles[i].row, bigTiles[i].col, validMoves[u]);
+          appendToRecentlyVisitedTiles(validTiles[u]);
+          return;
+        }
       }
     }
     // last move
-    performMove(bigTiles[i].row, bigTiles[i].col, validMoves.pop());
-    return;
+    if (checkAgainstRecentTiles(validTiles[u]) || Math.random() > RECENTLY_VISITED_TILES_FUDGE_PROB) {
+      performMove(bigTiles[i].row, bigTiles[i].col, validMoves[u]);
+      appendToRecentlyVisitedTiles(validTiles[u]);
+      return;
+    }
   }
 }
 
