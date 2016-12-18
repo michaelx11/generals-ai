@@ -81,18 +81,23 @@ function getValidMoveDirections(gameState, tileObj) {
   let row = tileObj.row;
   let col = tileObj.col;
 
+  logger.trace("checking orig row: " + row + " col: " + col);
+
   let validMoves = [];
   // Iterate through directions
   for (let i = 0; i < DIRECTIONS.length; i++) {
     let newR = row + DIRECTIONS[i][0];
     let newC = col + DIRECTIONS[i][1];
 
-    if (newR < 0 || newR >= gameState.numRows || newC < 0 || newC > gameState.numRows) {
+    if (newR < 0 || newR >= gameState.numRows || newC < 0 || newC >= gameState.numCols) {
       continue;
     }
 
+    logger.trace("newR: " + newR + " newC: " + newC);
+
     let newTile = gameState.tileGrid[newR][newC];
     if (newTile.desc.search(/mountain/gi) >= 0) {
+      logger.trace("skipped");
       continue;
     }
 
@@ -105,6 +110,9 @@ function makeRandomMove(gameState) {
   let ourTiles = getOurTiles(gameState);
   shuffle(ourTiles);
   for (let i = 0; i < ourTiles.length; i++) {
+    if (ourTiles[i].unitCount <= 1) {
+      continue;
+    }
     let validMoves = getValidMoveDirections(gameState, ourTiles[i]);
     if (validMoves.length > 0) {
       let randMove = validMoves[Math.floor(Math.random() * validMoves.length)];
@@ -222,8 +230,8 @@ function populateGameState() {
     for (var u = 0; u < gameState.numCols; u++) {
       var currentTile = currentTR.children[u];
       var tileObj = {};
-      tileObj.desc = currentTile.className;
-      tileObj.count = currentTile.innerText ? parseInt(currentTile.innerText) : 0;
+      tileObj.desc = currentTile.className ? currentTile.className : "";
+      tileObj.unitCount = currentTile.innerText ? parseInt(currentTile.innerText) : 0;
       tileObj.row = i;
       tileObj.col = u;
       // keep in formation
