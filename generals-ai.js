@@ -43,6 +43,7 @@ function getOurGeneralTile() {
 
 // == AI Engine Methods ==
 
+var ARROW_KEY_CODES = [37, 38, 39, 40];
 // == Public Action Helpers for AI Engine ==
 function performMove(startRow, startCol, direction, shouldSplit) {
   console.log("performing move!");
@@ -56,8 +57,15 @@ function performMove(startRow, startCol, direction, shouldSplit) {
   }
   // Fake arrow key move
   GLOBAL_KEY_DIR = direction;
+  var keyEvent = {keyCode: ARROW_KEY_CODES[direction]}
+  // stubs
+  keyEvent.preventDefault = function() {};
+  keyEvent.stopPropagation = function() {};
   // Trigger fake keydown event
-  GLOBAL_GAME_MAP.onKeyDown();
+  GLOBAL_GAME_MAP.onKeyDown(keyEvent);
+  // Deselect afterwards
+  keyEvent.keyCode = 32; // Space
+  GLOBAL_GAME_MAP.onKeyDown(keyEvent);
 }
 
 // Checks:
