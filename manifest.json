@@ -20,5 +20,6 @@
   "permissions": [
     "activeTab",
     "storage"
-  ]
+  ],
+  "web_accessible_resources": ["generals-ai.js"]
 }

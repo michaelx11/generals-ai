@@ -1,19 +1,17 @@
-var gameMap = null;
-var numRows = -1;
-var numCols = -1;
-
-function populateGameMapElement() {
-  gameMap = document.getElementById("map").children[0];
-  numRows = gameMap.childElementCount;
-  numCols = gameMap.children[0].childElementCount;
-
-  console.log("r: " + numRows + " c: " + numCols);
+function injectGameAI() {
+  console.log("injecting game UI");
+  var s = document.createElement('script');
+  s.src = chrome.extension.getURL('generals-ai.js');
+  s.onload = function() {
+    this.remove();
+  };
+  (document.head || document.documentElement).appendChild(s);
 }
 
 // Listen for messages
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     // If the received message has the expected format...
     if (msg.text === 'clicked') {
-      populateGameMapElement();
+      injectGameAI();
     }
 });
